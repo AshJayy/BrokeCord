@@ -39,7 +39,6 @@ A terminal-based chat system using the Publisher-Subscriber (Pub-Sub) model. Use
 ### Features
 - Choose between publisher or subscriber roles.
 - Real-time message delivery for subscribers.
-- Colorful terminal output (see `t3-topic-filtering/config.py`).
 - Graceful Exit.
 
 ### Usage
