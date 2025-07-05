@@ -10,15 +10,13 @@ def receive_messages(sock):
             if not data:
                 print("Disconnected from server.")
                 sys.exit(0)
-            print(f"\n[Mod]: {data.decode()}")
+            print(data.decode())
         except Exception as e:
             print(f"Disconnected from server. {e}")
             sys.exit(0)
 
 
 def publisher(sock):
-    sock.sendall(b"publisher")
-    print("You are a Mod. Type 'peace out' to leave.")
     while True:
         message = input("You: ")
         if message.lower() == 'peace out':
@@ -31,6 +29,7 @@ def publisher(sock):
                 print("Disconnected from server.")
                 sys.exit(0)
             if res != b"Ok":
+                print(f"res: {res}")
                 print("Failed to send message.")
         except Exception as e:
             print(e)
@@ -38,8 +37,6 @@ def publisher(sock):
 
 
 def subscriber(sock):
-    sock.sendall(b"subscriber")
-    print("You are now a member. Type 'peace out' to leave. \n Waiting for messages...")
     threading.Thread(target=receive_messages, args=(sock,), daemon=True).start()
 
     try:
@@ -50,6 +47,12 @@ def subscriber(sock):
                 break
     except KeyboardInterrupt:
         print("You rage-quit. Shame.")
+
+
+def negotiate_client_type(sock, type):
+    sock.sendall(type.encode())
+    res = sock.recv(1024)
+    print(res.decode())
 
 
 def client():
@@ -69,6 +72,8 @@ def client():
     except Exception as e:
         print(f"Connection failed: {e}")
         sys.exit(1)
+
+    negotiate_client_type(sock, client_type)
 
     if client_type == 'publisher':
         publisher(sock)

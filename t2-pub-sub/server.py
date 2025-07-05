@@ -39,8 +39,8 @@ def handle_client(conn, addr):
                 break
             print(f"[Mod {addr}]: {message.decode()}")
             if conn in publishers:
-                conn.sendall(b"Ok")
                 broadcast(message, conn)
+                conn.sendall(b"Ok")
 
     except Exception as e:
         print(f"{addr} cannot be reached: {e}")
@@ -52,6 +52,7 @@ def handle_client(conn, addr):
         if conn in subscribers:
             subscribers.remove(conn)
         conn.close()
+
 
 def main():
     if len(sys.argv) < 2:
@@ -75,6 +76,7 @@ def main():
         conn, addr = s.accept()
         threading.Thread(target=handle_client, args=(conn, addr), daemon=True).start()
 
+
 def admin_commands():
     while True:
         cmd = input()
@@ -88,6 +90,7 @@ def admin_commands():
                     pass
             print("You shut down the server. No one knows. Drama!")
             sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
