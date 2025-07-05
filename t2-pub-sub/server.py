@@ -7,15 +7,17 @@ subscribers = []
 
 
 def broadcast(message, sender_conn):
-    for client in subscribers[:]:  # Use a copy to avoid issues during iteration
+    """Send a message to all subscribers except the sender."""
+    for client in subscribers[:]:
         if client != sender_conn:
             try:
                 client.sendall(b"[Mod]: " + message)
-            except:
+            except Exception:
                 subscribers.remove(client)
 
 
 def handle_client(conn, addr):
+    """Handle a single client connection."""
     try:
         client_type = conn.recv(1024).decode().strip().lower()
 
@@ -41,10 +43,8 @@ def handle_client(conn, addr):
             if conn in publishers:
                 broadcast(message, conn)
                 conn.sendall(b"Ok")
-
     except Exception as e:
-        print(f"{addr} cannot be reached: {e}")
-
+        print(f"Connection error with {addr}: {e}")
     finally:
         print(f"Kicked {addr}")
         if conn in publishers:
@@ -52,6 +52,21 @@ def handle_client(conn, addr):
         if conn in subscribers:
             subscribers.remove(conn)
         conn.close()
+
+
+def admin_commands():
+    """Listen for admin commands from the terminal."""
+    while True:
+        cmd = input()
+        if cmd.lower() == 'yeet':
+            for client in publishers + subscribers:
+                try:
+                    client.sendall(b"[Bot]: Server maintenance initiated. All users have been kicked.")
+                    client.close()
+                except Exception as e:
+                    print(f"Could not kick client: {e}")
+            print("You shut down the server. No one knows. Drama!")
+            sys.exit(0)
 
 
 def main():
@@ -64,32 +79,17 @@ def main():
     host = socket.gethostname()
     port = int(sys.argv[1])
 
-    s = socket.socket()
-    s.bind((host, port))
-    s.listen()
+    server_sock = socket.socket()
+    server_sock.bind((host, port))
+    server_sock.listen()
     print(f"Server is live on {port}. Type 'yeet' to rage-quit the server.")
     print("Waiting for someone to join...")
 
     threading.Thread(target=admin_commands, daemon=True).start()
 
     while True:
-        conn, addr = s.accept()
+        conn, addr = server_sock.accept()
         threading.Thread(target=handle_client, args=(conn, addr), daemon=True).start()
-
-
-def admin_commands():
-    while True:
-        cmd = input()
-        if cmd.lower() == 'yeet':
-            for client in publishers + subscribers:
-                try:
-                    client.sendall(b"[Bot]: Server maintenance initiated. All users have been kicked.")
-                    client.close()
-                except Exception as e:
-                    print(f"Persistent User. Couldn't kick {client}.\n{e}")
-                    pass
-            print("You shut down the server. No one knows. Drama!")
-            sys.exit(0)
 
 
 if __name__ == "__main__":
