@@ -106,7 +106,9 @@ def admin_commands(server_socket):
                         client.sendall(b"[Bot]: Server maintenance initiated. All users have been kicked.")
                         client.close()
                     except Exception as e:
-                        print(f"{formatting['YELLOW']}Persistent User. Couldn't kick {client}.\n{e}{formatting['RESET']}", flush=True)
+                        print(
+                            f"{formatting['YELLOW']}Persistent User. Couldn't kick {client}.\n{e}{formatting['RESET']}",
+                            flush=True)
             print(f"{formatting['RED']}You shut down the server. No one knows. Drama!{formatting['RESET']}")
             server_socket.close()
             sys.exit(0)

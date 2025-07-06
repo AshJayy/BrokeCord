@@ -1,3 +1,4 @@
+import os
 import socket
 import threading
 import sys
@@ -13,6 +14,7 @@ def broadcast(message, sender_conn):
             try:
                 client.sendall(b"[Mod]: " + message)
             except Exception:
+                print(f"Failed to send message to {client}")
                 subscribers.remove(client)
 
 
@@ -66,7 +68,7 @@ def admin_commands():
                 except Exception as e:
                     print(f"Could not kick client: {e}")
             print("You shut down the server. No one knows. Drama!")
-            sys.exit(0)
+            os._exit(0)
 
 
 def main():

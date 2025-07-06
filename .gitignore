@@ -1,5 +1,6 @@
 .venv
 .idea
+test/*
 
 # macOS
 .DS_Store

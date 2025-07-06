@@ -6,6 +6,7 @@ from config import formatting
 
 live = False
 
+
 def receive_messages(sock):
     """Background thread: listens for messages from the server."""
     while True:
@@ -13,19 +14,26 @@ def receive_messages(sock):
             data = sock.recv(1024)
             if not data:
                 print(f"{formatting['RED']}Disconnected from server.{formatting['RESET']}", flush=True)
-                os._exit(0)
+                handle_exit(sock)
 
             print(data.decode())
 
             if b"Server maintenance initiated" in data:
                 print(f"{formatting['RED']}Disconnected from server.{formatting['RESET']}", flush=True)
                 os._exit(0)
+
+        except KeyboardInterrupt:
+            print(f"{formatting['YELLOW']}You rage-quit. Shame.{formatting['RESET']}", flush=True)
+            handle_exit(sock)
+            return
+
         except Exception as e:
             global live
             if live:
                 print(f"{formatting['RED']}Disconnected from server. {e}{formatting['RESET']}", flush=True)
-            live = False
-            os._exit(0)
+            handle_exit(sock)
+            return
+
 
 def handle_exit(sock):
     """Cleanly exit the client."""
@@ -40,8 +48,8 @@ def handle_exit(sock):
         pass
     os._exit(0)
 
+
 def publisher(sock):
-    select_topic(sock)
     threading.Thread(target=receive_messages, args=(sock,), daemon=True).start()
     while True:
         message = input("You: ")
@@ -59,8 +67,8 @@ def publisher(sock):
             print(f"{formatting['RED']}{e}{formatting['RESET']}", flush=True)
             break
 
+
 def subscriber(sock):
-    select_topic(sock)
     threading.Thread(target=receive_messages, args=(sock,), daemon=True).start()
     try:
         while True:
@@ -129,6 +137,8 @@ def client():
 
     global live
     live = True
+
+    select_topic(sock)
 
     if client_type == 'publisher':
         publisher(sock)

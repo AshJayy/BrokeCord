@@ -1,55 +1,62 @@
+import os
 import socket
 import sys
 import threading
 
+live = False
+
 
 def receive_messages(sock):
     """Listen for messages from the server in a background thread."""
+    global live
     while True:
         try:
             data = sock.recv(1024)
             if not data:
-                print("Disconnected from server.")
-                sys.exit(0)
+                handle_exit(sock, "Disconnected from server.")
             print(data.decode())
         except Exception as e:
-            print(f"Disconnected from server. {e}")
-            sys.exit(0)
+            if live:
+                print(f"Disconnected from server. {e}")
+            handle_exit(sock, "Disconnected from server.")
+            return
 
 
 def handle_exit(sock, message):
     """Cleanly exit the client."""
+    global live
+    live = False
     print(message)
     try:
         sock.close()
-    except Exception:
-        pass
-    sys.exit(0)
+    except Exception as e:
+        print(e)
+    os._exit(0)
 
 
 def publisher(sock):
-    """Publisher: send messages to the server."""
+    global live
+    live = True
+    threading.Thread(target=receive_messages, args=(sock,), daemon=True).start()
     while True:
         message = input("You: ")
         if message.lower() == 'peace out':
             handle_exit(sock, "You left the server.")
         try:
             sock.sendall(message.encode())
-            res = sock.recv(1024)
-            if not res:
-                handle_exit(sock, "Disconnected from server.")
-            if res != b"Ok":
-                print(f"Failed to send message. Server response: {res.decode()}")
+        except KeyboardInterrupt:
+            handle_exit(sock, "You rage-quit. Shame.")
         except Exception as e:
             print(f"Error: {e}")
             break
 
 
 def subscriber(sock):
-    """Subscriber: receive messages from the server."""
+    global live
+    live = True
     threading.Thread(target=receive_messages, args=(sock,), daemon=True).start()
     try:
-        while True:
+        while live:
             user_input = input()
             if user_input.lower() == 'peace out':
                 handle_exit(sock, "Exiting the server. Bye!")
@@ -58,7 +65,6 @@ def subscriber(sock):
 
 
 def negotiate_client_type(sock, client_type):
-    """Negotiate client type with the server."""
     sock.sendall(client_type.encode())
     res = sock.recv(1024)
     print(res.decode())
